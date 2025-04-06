@@ -17,17 +17,18 @@
 #include <algorithm>
 #include <mutex>
 #include "Data.h"
+#include "GivensRotation.h"
 
 
 class MatrixReverb
 {
 public:
     MatrixReverb(std::atomic<float>* preDelayMs,
-            std::atomic<float>* chorus,
+            std::atomic<float>* rotation,
+            std::atomic<float>* dispersion,
             std::atomic<float>* decayS,
             std::atomic<float>* damp,
-            std::atomic<float>* density,
-            juce::AudioParameterBool* holdParameter);
+            std::atomic<float>* density);
     
     void setSamplerate(float);
     void processBlock(juce::AudioBuffer<float>&);
@@ -45,13 +46,13 @@ private:
     float cubicLagrangeInterpolation(std::array<float, 4> y, float x);
     
     SmoothedParameter<float> distance;
-    SmoothedParameter<float> chorus;
+    SmoothedParameter<float> rotation;
+    SmoothedParameter<float> dispersion;
     SmoothedParameter<float> decayS;
     SmoothedParameter<float> damp;
     SmoothedParameter<float> density;
-    juce::AudioParameterBool* holdParameter;
 
-    const float smoothingMs = 10;
+    const float smoothingMs = 20;
     float smoothingCoeff;
     
     float projectSampleRate = 44100;
@@ -65,28 +66,18 @@ private:
     std::atomic<bool> matrixChanged;
     std::string matrixName{"Simple"};
     
-    const float envelopeSmoothing = 0.95;
-    float envelopeSample = 0;
-    const float gateSmoothing = 0.99;
-    const float gateThreshold = 0.1;
-    float gateSample = 0;
-    std::vector<float> gateBuffer;
-    int clearSamples = 20;
-    int clearCounter = 0;
-    std::vector<float> clearBuffer;
-    
-    std::array<float, numKernels> targetDelays;
-    std::array<float, numKernels> delays;
-    std::array<float, numKernels> lowpassSamples;
-    std::array<std::vector<float>, numKernels> delayBuffer;
-    std::array<std::vector<float>, numKernels> outputBuffer;
+    std::array<float, numKernels> targetDelays{};
+    std::array<float, numKernels> delays{};
+    std::array<float, numKernels> lowpassSamples{};
+    std::array<std::vector<float>, numKernels> delayBuffer{};
+    std::array<std::vector<float>, numKernels> outputBuffer{};
     int delayBufferIndex = 0;
     int delayBufferSize;
     
     const float allpassDelayRatio = (0.1465 * 3.0) / 7;
     std::array<float, numKernels> targetAllpassDelays{0};
     std::array<float, numKernels> allpassDelays{0};
-    std::array<std::vector<float>, numKernels> allpassBuffer;
+    std::array<std::vector<float>, numKernels> allpassBuffer{};
     int allpassBufferIndex = 0;
     int allpassBufferSize;
     
@@ -94,9 +85,9 @@ private:
     std::array<float, numKernels> targetDecays{0};
     Eigen::Matrix<float, numKernels, numKernels> decayMatrix;
     Eigen::Matrix<float, numKernels, numKernels> diffuseMatrix;
+    
+    float maxRotation = 2 * M_PI / projectSampleRate;
+    std::array<float, GivensRotation<numKernels>::numAngles> phases{};
+    GivensRotation<numKernels> rotationMatrix{};
 
-    const float modDepth = 100;
-    const float modFrequency = 0.5;
-    float modIncrement = 0;
-    std::array<float, numKernels> modPhases{0};
 };

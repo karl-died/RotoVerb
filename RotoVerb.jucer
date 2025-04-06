@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="THL75v" name="RotoVerb" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" headerPath="/usr/local/include/&#10;">
   <MAINGROUP id="T8QuRv" name="RotoVerb">
+    <GROUP id="{C52E6058-70F4-7936-CC6A-E5F2A872387E}" name="Assets">
+      <FILE id="kYpIDE" name="archivo_vf.ttf" compile="0" resource="1" file="Assets/archivo_vf.ttf"/>
+      <FILE id="Ae6CDX" name="background.png" compile="0" resource="1" file="Assets/background.png"/>
+      <FILE id="hsL2WB" name="lens.png" compile="0" resource="1" file="Assets/lens.png"/>
+    </GROUP>
     <GROUP id="{B9DB3742-3521-F94D-A145-693313313597}" name="Source">
+      <FILE id="dlm1Co" name="LensComponent.h" compile="0" resource="0" file="Source/LensComponent.h"/>
+      <FILE id="AZ4e8O" name="PointCloud.h" compile="0" resource="0" file="Source/PointCloud.h"/>
       <FILE id="VzRKAp" name="GivensRotation.h" compile="0" resource="0"
             file="Source/GivensRotation.h"/>
       <FILE id="dO2XYU" name="SmoothedParameter.h" compile="0" resource="0"

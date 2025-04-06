@@ -10,6 +10,8 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "PointCloud.h"
+#include "LensComponent.h"
 
 typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
 typedef juce::AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;
@@ -18,7 +20,7 @@ using namespace juce;
 //==============================================================================
 /**
 */
-class RotoVerbAudioProcessorEditor  : public juce::AudioProcessorEditor
+class RotoVerbAudioProcessorEditor  : public juce::AudioProcessorEditor, public Timer
 {
 public:
     RotoVerbAudioProcessorEditor (RotoVerbAudioProcessor&,
@@ -28,6 +30,8 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    
+    void timerCallback() override;
 
 private:
     // This reference is provided as a quick way for your editor to
@@ -40,9 +44,13 @@ private:
     Slider distanceSlider;
     std::unique_ptr<SliderAttachment> distanceAttachment;
     
-    Label chorusLabel;
-    Slider chorusSlider;
-    std::unique_ptr<SliderAttachment> chorusAttachment;
+    Label rotationLabel;
+    Slider rotationSlider;
+    std::unique_ptr<SliderAttachment> rotationAttachment;
+    
+    Label dispersionLabel;
+    Slider dispersionSlider;
+    std::unique_ptr<SliderAttachment> dispersionAttachment;
     
     Label decayLabel;
     Slider decaySlider;
@@ -62,7 +70,12 @@ private:
     
     ComboBox matrixMenu;
     
-    TextButton holdButton;
-    std::unique_ptr<ButtonAttachment> holdAttachment;
+    PointCloud pointCloud{};
+    
+    Image background;
+    LensComponent lens{};
+    
+    Font archivoFont;
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RotoVerbAudioProcessorEditor)
 };

@@ -12,17 +12,17 @@
 #include "Data.h"
 
 MatrixReverb::MatrixReverb(std::atomic<float>* distance,
-                           std::atomic<float>* chorus,
+                           std::atomic<float>* rotation,
+                           std::atomic<float>* dispersion,
                            std::atomic<float>* decayS,
                            std::atomic<float>* damp,
-                           std::atomic<float>* density,
-                           juce::AudioParameterBool* holdParameter) :
+                           std::atomic<float>* density) :
                 distance(distance),
-                chorus(chorus),
+                rotation(rotation),
+                dispersion(dispersion),
                 decayS(decayS),
                 damp(damp),
-                density(density),
-                holdParameter(holdParameter)
+                density(density)
 {
     delays = std::array<float, numKernels>{0};
     lowpassSamples = std::array<float, numKernels>{0};
@@ -41,9 +41,6 @@ MatrixReverb::MatrixReverb(std::atomic<float>* distance,
     for(int i = 0; i < numKernels; i++)
         for(int j = 0; j < numKernels; j++)
             diffuseMatrix(i, j) = initialMatrix[i + j * numKernels];
-    
-    for(int i = 0; i < numKernels; i++)
-        modPhases[i] = i * 2 * M_PI / numKernels;
 }
                 
 
@@ -53,9 +50,6 @@ void MatrixReverb::setSamplerate(float sampleRate)
     
     delayBufferSize = std::ceil(maxDelayMs * projectSampleRate / 1000) * 2;
     allpassBufferSize = std::ceil(delayBufferSize * allpassDelayRatio);
-    
-    gateBuffer = std::vector<float>(delayBufferSize, 0);
-    clearBuffer = std::vector<float>(delayBufferSize, 0);
     
     lowpassSamples = std::array<float, numKernels>{0};
     
@@ -68,12 +62,9 @@ void MatrixReverb::setSamplerate(float sampleRate)
     
     smoothingCoeff = pow(0.1, 1000.0 / (smoothingMs * projectSampleRate));
     
-    modIncrement = M_PI / sampleRate;
+    maxRotation = 20 * M_PI / projectSampleRate;
     
-    for(int i = 0; i < numKernels; i++)
-        modPhases[i] = i * 2 * M_PI / numKernels;
-    
-    chorus.setSmoothing(smoothingCoeff);
+    rotation.setSmoothing(smoothingCoeff);
     decayS.setSmoothing(smoothingCoeff);
     damp.setSmoothing(smoothingCoeff);
     density.setSmoothing(smoothingCoeff);
@@ -159,24 +150,6 @@ void MatrixReverb::processBlock(juce::AudioBuffer<float>& buffer)
         }
     }
     
-    bool hold = holdParameter->get();
-    for(int sample = 0; sample < numSamples; sample++)
-    {
-        envelopeSample = envelopeSmoothing * envelopeSample + (1 - envelopeSmoothing) * abs(inputBuffer[sample]);
-        bool triggered = (envelopeSample > gateThreshold);
-        gateSample = gateSmoothing * gateSample + (1 - gateSmoothing) * triggered;
-        gateBuffer[(delayBufferIndex + sample) % delayBufferSize] = gateSample;
-        bool clearValue = (triggered && (clearCounter < clearSamples) && hold);
-        clearBuffer[(delayBufferIndex + sample) % delayBufferSize] = !clearValue;
-        
-        if(clearValue)
-            clearCounter++;
-        else
-            clearCounter = 0;
-        
-        if(hold)
-            inputBuffer[sample] *= gateSample;
-    }
     
     for(int buffer = 0; buffer < numKernels; buffer++)
     {
@@ -189,14 +162,6 @@ void MatrixReverb::processBlock(juce::AudioBuffer<float>& buffer)
     
     for(int sample = 0; sample < numSamples; sample++)
     {
-        if(hold)
-        {
-            for(int i = 0; i < numKernels; i++)
-            {
-                int clearIndex = (delayBufferSize + delayBufferIndex - (int) delays[i]) % delayBufferSize;
-                targetDecays[i] = clearBuffer[clearIndex];
-            }
-        }
         
         for(int i = 0; i < numKernels; i++)
             decayMatrix(i, i) = smoothingCoeff * decayMatrix(i, i) + (1 - smoothingCoeff) * targetDecays[i];
@@ -208,11 +173,7 @@ void MatrixReverb::processBlock(juce::AudioBuffer<float>& buffer)
             allpassDelays[i] = smoothingCoeff * allpassDelays[i] + (1 - smoothingCoeff) * targetAllpassDelays[i];
             delays[i] = smoothingCoeff * delays[i] + (1 - smoothingCoeff) * targetDelays[i];
             
-            float mod = sin(modPhases[i]);
-            float delay = delays[i] + chorus.getValue() * modDepth * mod * mod;
-            
-            modPhases[i] += modIncrement;
-            modPhases[i] *= (modPhases[i] < 2 * M_PI);
+            float delay = delays[i];
             
             int bufferIndex = (delayBufferSize + delayBufferIndex - (int) delay) % delayBufferSize;
             std::array<float, 4> interpolationSamples{0};
@@ -250,18 +211,35 @@ void MatrixReverb::processBlock(juce::AudioBuffer<float>& buffer)
             */
             
             feedbackSamples(i, 0) = allpassSample;
-            outputBuffer[i][sample] = allpassSample;
+            //outputBuffer[i][sample] = allpassSample;
         }
         
         feedbackSamples = feedbackSamples.transpose() * diffuseMatrix;
+        
+        int numAngles = GivensRotation<12>::numAngles;
+        float r = rotation.getValue();
+        float d = dispersion.getValue();
+        for(int i = 0; i < numAngles; i++)
+        {
+            float del = ((float) i) / numAngles;
+            
+            phases[i] += (r / 2 - (del * d * r)) * maxRotation;
+            phases[i] *= (phases[i] < 2 * M_PI);
+        }
+        
+        feedbackSamples = rotationMatrix.rotate(phases, feedbackSamples);
+        
+        for(int i = 0; i < numKernels; i++)
+            outputBuffer[i][sample] = feedbackSamples(i, 0);
+        
         feedbackSamples = feedbackSamples.transpose() * decayMatrix;
         
         for(int i = 0; i < numKernels; i++)
             delayBuffer[i][delayBufferIndex] += feedbackSamples(i, 0);
-        
        
         distance.update();
-        chorus.update();
+        rotation.update();
+        dispersion.update();
         decayS.update();
         damp.update();
         density.update();

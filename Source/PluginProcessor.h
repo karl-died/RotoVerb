@@ -64,6 +64,9 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RotoVerbAudioProcessor)
     
     SmoothedParameter<float>* mix;
+    std::atomic<float>* densityParam;
+    std::atomic<float>* distanceParam;
+    std::atomic<float> schwammDelayParam{0};
     
     StringArray matrixNames{};
     

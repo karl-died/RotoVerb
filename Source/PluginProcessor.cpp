@@ -25,9 +25,13 @@ parameters(*this, nullptr, Identifier("RotoVerb"),
     std::make_unique<AudioParameterFloat> (ParameterID {"distance", 1 },
                                            "Distance",
                                            NormalisableRange<float>(0.001f, 1.0f, 0.001f, 1.0f),
-                                           0.3f),
-    std::make_unique<AudioParameterFloat> (ParameterID {"chorus", 1 },
-                                           "Chorus",
+                                           0.15f),
+    std::make_unique<AudioParameterFloat> (ParameterID {"rotation", 1 },
+                                           "Rotation",
+                                           NormalisableRange<float>(0.0f, 1.0f, 0.00001f, 0.3333f),
+                                           0.0f),
+    std::make_unique<AudioParameterFloat> (ParameterID {"dispersion", 1 },
+                                           "Dispersion",
                                            NormalisableRange<float>(0.0f, 1.0f, 0.0001f, 1.0f),
                                            0.0f),
     std::make_unique<AudioParameterFloat> (ParameterID {"decayS", 1},
@@ -37,41 +41,40 @@ parameters(*this, nullptr, Identifier("RotoVerb"),
     std::make_unique<AudioParameterFloat> (ParameterID {"density", 1},
                                            "Density",
                                            NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f),
-                                           0.01f),
+                                           0.4f),
     std::make_unique<AudioParameterFloat> (ParameterID {"damp", 1},
                                            "Damp",
                                            NormalisableRange<float>(0.0f, 1.0f, 0.001f, 1.0f),
-                                           0.1f),
+                                           0.5f),
     std::make_unique<AudioParameterInt> (ParameterID {"matrix", 1},
                                             "Matrix",
                                             0,
                                             100,
                                             0),
-    std::make_unique<AudioParameterBool> (ParameterID {"hold", 1},
-                                            "Hold",
-                                            0),
     std::make_unique<AudioParameterFloat> (ParameterID {"mix", 1},
                                            "Mix",
                                            NormalisableRange<float>(0.0f, 1.0f, 0.01f, 1.0f),
-                                           1.0f)
+                                           0.5f)
         })
 #endif
 {
     reverb = new MatrixReverb(parameters.getRawParameterValue("distance"),
-                            parameters.getRawParameterValue("chorus"),
+                            parameters.getRawParameterValue("rotation"),
+                            parameters.getRawParameterValue("dispersion"),
                             parameters.getRawParameterValue("decayS"),
                             parameters.getRawParameterValue("damp"),
-                            parameters.getRawParameterValue("density"),
-                            (AudioParameterBool*) parameters.getParameter("hold"));
+                            parameters.getRawParameterValue("density"));
   
+    distanceParam = parameters.getRawParameterValue("distance");
+    densityParam = parameters.getRawParameterValue("density");
 
-  schwamm = new Schwamm(parameters.getRawParameterValue("distance"),
-                        parameters.getRawParameterValue("density"));
+    schwamm = new Schwamm(&schwammDelayParam,
+                          parameters.getRawParameterValue("density"));
   
-  mix = new SmoothedParameter<float>(parameters.getRawParameterValue("mix"));
+    mix = new SmoothedParameter<float>(parameters.getRawParameterValue("mix"));
   
-  for(const auto& matrix : Data::matrices)
-      matrixNames.add(matrix.first);
+    for(const auto& matrix : Data::matrices)
+        matrixNames.add(matrix.first);
 }
 
 RotoVerbAudioProcessor::~RotoVerbAudioProcessor()
@@ -190,6 +193,7 @@ void RotoVerbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     auto totalNumOutputChannels = getTotalNumOutputChannels();
     
     reverbBuffer.makeCopyOf(buffer);
+    schwammDelayParam = *densityParam * *distanceParam;
     
     //buffer.applyGainRamp(0, buffer.getNumSamples(), 1.0 - mix->getValue(), 1.0 - mix->getTargetValue());
     

@@ -4,6 +4,8 @@
 //
 //  Created by Karl Diedrichsen on 01.04.25.
 //
+#define GIVENS_ROTATION_INCLUDED
+
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
 #include <array>
@@ -19,104 +21,11 @@ public:
     static constexpr int numAngles = ((N - 1) * N) / 2;
     static constexpr int numPackedMatrices = N - 1;
     
+    GivensRotation() {}
     
-    
-    GivensRotation()
+    Eigen::Matrix<float, N, 1> rotate(const std::array<float, numAngles>& angles, const Eigen::Matrix<float, N, 1>& input)
     {
-        std::array<std::array<int, N>, numPackedMatrices> packedIndeces{};
-        std::array<std::array<bool, N>, N> usedMatrices{};
-        
-        for(int i = 0; i < numPackedMatrices; i++)
-            packedIndeces[i][1] = i + 1;
-        
-        long int numIterations = 0;
-        std::function<bool(int, int, int, int)> fill = [&] (int i, int j, int k, int l)
-        {
-            numIterations++;
-            if(j > (N / 2) - 1)
-            {
-                j = 1;
-                i++;
-                k = 1;
-                l = 2;
-                if(i >= numPackedMatrices)
-                    return true;
-            }
-            
-            while(true)
-            {
-                if(l >= N)
-                {
-                    k++;
-                    l = k + 1;
-                }
-                
-                if(k >= N - 1)
-                    return false;
-                
-                if(usedMatrices[k][l] == false)
-                    break;
-                
-                l++;
-            }
-            
-            for(int a : packedIndeces[i])
-                if(a == k)
-                    return fill(i, j, k + 1, k + 2);
-               
-            for(int a : packedIndeces[i])
-                if(a == l)
-                    return fill(i, j, k, l + 1);
-
-            
-            packedIndeces[i][2 * j]     = k;
-            packedIndeces[i][2 * j + 1] = l;
-            
-            usedMatrices[k][l] = true;
-            
-            bool result = fill(i, j + 1, k + 1, k + 2);
-            
-            if(result == false)
-            {
-                packedIndeces[i][2 * j]     = 0;
-                packedIndeces[i][2 * j + 1] = 0;
-                
-                usedMatrices[k][l] = false;
-                return fill(i, j, k, l + 1);
-            }
-            else
-            {
-                return true;
-            }
-        };
-        
-        bool result = fill(0, 1, 1, 2);
-        
-        std::array<std::array<int, N>, N> angleIndeces{};
-        
-        int counter = 0;
-        
-        for(int i = 0; i < N + 1; i++)
-            for(int j = i + 1; j < N; j++)
-                angleIndeces[i][j] = counter++;
-        
-        for(int i = 0; i < numPackedMatrices; i++)
-        {
-            for(int j = 0; j < N / 2; j++)
-            {
-                int x = packedIndeces[i][2 * j];
-                int y  = packedIndeces[i][2 * j + 1];
-                packedMatrixMapping[i][j].x = x;
-                packedMatrixMapping[i][j].y = y;
-                packedMatrixMapping[i][j].angleIndex =  angleIndeces[x][y];
-            }
-        }
-        std::cout << result << std::endl;
-    }
-    
-    Eigen::Matrix<float, 1, N> rotate(const std::array<float, numAngles>& angles, const Eigen::Matrix<float, N, 1>& input)
-    {
-        static std::array<Eigen::Matrix<float, N, N>, numPackedMatrices> packedMatrices{};
+        std::array<Eigen::Matrix<float, N, N>, numPackedMatrices> packedMatrices{};
         
         for(int i = 0; i < numPackedMatrices; i++)
         {
@@ -177,6 +86,101 @@ private:
         short int angleIndex;
     };
     
-    std::array<std::array<MatrixEntry, N / 2>, numPackedMatrices> packedMatrixMapping{};
+    static constexpr bool fill(int i, int j, int k, int l, std::array<std::array<int, N>, numPackedMatrices>& packedIndeces,
+        std::array<std::array<bool, N>, N>& usedMatrices)
+    {
+        if(j > (N / 2) - 1)
+        {
+            j = 1;
+            i++;
+            k = 1;
+            l = 2;
+            if(i >= numPackedMatrices)
+                return true;
+        }
+        
+        while(true)
+        {
+            if(l >= N)
+            {
+                k++;
+                l = k + 1;
+            }
+            
+            if(k >= N - 1)
+                return false;
+            
+            if(usedMatrices[k][l] == false)
+                break;
+            
+            l++;
+        }
+        
+        for(int a : packedIndeces[i])
+            if(a == k)
+                return fill(i, j, k + 1, k + 2, packedIndeces, usedMatrices);
+           
+        for(int a : packedIndeces[i])
+            if(a == l)
+                return fill(i, j, k, l + 1, packedIndeces, usedMatrices);
+
+        
+        packedIndeces[i][2 * j]     = k;
+        packedIndeces[i][2 * j + 1] = l;
+        
+        usedMatrices[k][l] = true;
+        
+        bool result = fill(i, j + 1, k + 1, k + 2, packedIndeces, usedMatrices);
+        
+        if(result == false)
+        {
+            packedIndeces[i][2 * j]     = 0;
+            packedIndeces[i][2 * j + 1] = 0;
+            
+            usedMatrices[k][l] = false;
+            return fill(i, j, k, l + 1, packedIndeces, usedMatrices);
+        }
+        else
+        {
+            return true;
+        }
+    };
+    
+    static constexpr std::array<std::array<MatrixEntry, N / 2>, numPackedMatrices> initializePackedMapping()
+    {
+        std::array<std::array<int, N>, numPackedMatrices> packedIndeces{};
+        std::array<std::array<bool, N>, N> usedMatrices{};
+        
+        for(int i = 0; i < numPackedMatrices; i++)
+            packedIndeces[i][1] = i + 1;
+        
+        fill(0, 1, 1, 2, packedIndeces, usedMatrices);
+        
+        std::array<std::array<int, N>, N> angleIndeces{};
+        
+        int counter = 0;
+        
+        for(int i = 0; i < N + 1; i++)
+            for(int j = i + 1; j < N; j++)
+                angleIndeces[i][j] = counter++;
+        
+        std::array<std::array<MatrixEntry, N / 2>, numPackedMatrices> tmpMapping{};
+        
+        for(int i = 0; i < numPackedMatrices; i++)
+        {
+            for(int j = 0; j < N / 2; j++)
+            {
+                int x = packedIndeces[i][2 * j];
+                int y  = packedIndeces[i][2 * j + 1];
+                tmpMapping[i][j].x = x;
+                tmpMapping[i][j].y = y;
+                tmpMapping[i][j].angleIndex =  angleIndeces[x][y];
+            }
+        }
+        
+        return tmpMapping;
+    }
+    
+    static constexpr std::array<std::array<MatrixEntry, N / 2>, numPackedMatrices> packedMatrixMapping = initializePackedMapping();
 };
 
