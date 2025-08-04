@@ -76,6 +76,39 @@ public:
         
         return result;
     }
+
+    Eigen::Matrix<float, N, 1> rotateSparser(const std::array<float, numAngles>& angles, const Eigen::Matrix<float, N, 1>& input)
+    {
+        std::array<float, N> tmp_in;
+        std::array<float, N> tmp_out {0.0};
+        
+        const float* input_array = input.data();
+        for(int i = 0; i < N; i++)
+            tmp_in[i] = input_array[i];
+        
+        float* _in = &tmp_in[0];
+        float* _out = &tmp_out[0];
+        
+        for(auto& packedMatrix : packedMatrixMapping)
+        {
+            
+            for(const MatrixEntry& me : packedMatrix)
+            {
+                const float c = cos(angles[me.angleIndex]);
+                const float s = sin(angles[me.angleIndex]);
+                
+                _out[me.x] = _in[me.x] * c - _in[me.y] * s;
+                _out[me.y] = _in[me.y] * c + _in[me.x] * s;
+            }
+            
+            std::swap(_in, _out);
+            
+            for(int i = 0; i < N; i++)
+                _out[i] = 0;
+        }
+
+        return Eigen::Matrix<float, N, 1>(_in);
+    }
     
 private:
     

@@ -74,7 +74,7 @@ public:
         }
 
         for(auto& vertex : vertices12d)
-            vertex = rotation.rotate(angles, vertex);
+            vertex = rotation.rotateSparser(angles, vertex);
         
         auto bounds = getLocalBounds();
         int cloudX = bounds.getWidth() / 2;
