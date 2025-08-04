@@ -23,8 +23,13 @@ public:
         for(int i = 0; i < 12; i++)
         {
             vertices12d.emplace_back();
+            for(int j = 0; j < 12; j++)
+                vertices12d[2 * i](j) = 0;
             vertices12d[2 * i](i, 0) = 1 - (2 * (i % 2 == 0));
+            
             vertices12d.emplace_back();
+            for(int j = 0; j < 12; j++)
+                vertices12d[2 * i + 1](j, 0) = 0;
             vertices12d[2 * i + 1](i, 0) = -sqrt(2);
             vertices12d[2 * i + 1]((i+5)%12, 0) = -sqrt(2);
         }
@@ -86,16 +91,20 @@ public:
         {
             float x = vertex(0, 0);
             float y = vertex(1, 0);
+            
             float dist2 = scale * (x * x + y * y) / maxScale;
-            float lim = tanh(dist2);
-            float r = lim / dist2;
+            if(dist2 > 200) dist2 = 200;
+            float r = tanh(dist2) / (dist2 + 0.000001);
+            //if(r > 1.0) r = 1.0;
             x *= r;
             y *= r;
+            
             float d = pointSize * (1 - 0.3 * vertex(2, 0));
+            
             g.setColour(Colour::fromHSV((float) counter / 12,
                                         0.5f,
                                         1.0f,
-                                        (float) 0.6 + 0.4 * vertex(2, 0)));
+                                        (float) 0.7 + 0.4 * vertex(2, 0)));
             g.fillEllipse(cloudX + scale * x - (d / 2),
                           cloudY + scale * y - (d / 2),
                           d,

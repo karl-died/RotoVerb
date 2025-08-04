@@ -17,8 +17,8 @@ public:
     LensComponent()
     {
         std::unique_ptr<PNGImageFormat> png = std::make_unique<PNGImageFormat>();
-        std::unique_ptr<MemoryInputStream> imgStream = std::make_unique<MemoryInputStream>(BinaryData::lens_png,
-                                                                                           BinaryData::lens_pngSize,
+        std::unique_ptr<MemoryInputStream> imgStream = std::make_unique<MemoryInputStream>(BinaryData::lens_l_png,
+                                                                                           BinaryData::lens_l_pngSize,
                                                                                            false);
         image = std::make_unique<Image>(png->decodeImage(*imgStream));
     }
@@ -30,7 +30,10 @@ public:
     
     void paint(Graphics& g) override
     {
-        g.drawImageAt(*image, 0, 0);
+        const std::shared_ptr<AffineTransform> transform = std::make_unique<AffineTransform>(0.5, 0.0, 0.0,
+                                              0.0, 0.5, 0.0);
+        
+        g.drawImageTransformed(*image, *transform);
     }
     
 private:

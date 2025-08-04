@@ -219,15 +219,19 @@ void MatrixReverb::processBlock(juce::AudioBuffer<float>& buffer)
         int numAngles = GivensRotation<12>::numAngles;
         float r = rotation.getValue();
         float d = dispersion.getValue();
+        
         for(int i = 0; i < numAngles; i++)
         {
             float del = ((float) i) / numAngles;
             
             phases[i] += (r / 2 - (del * d * r)) * maxRotation;
             phases[i] *= (phases[i] < 2 * M_PI);
+            
+            rotations[i] = 0.5 * sin(phases[i]);
         }
         
-        feedbackSamples = rotationMatrix.rotate(phases, feedbackSamples);
+        
+        feedbackSamples = rotationMatrix.rotate(rotations, feedbackSamples);
         
         for(int i = 0; i < numKernels; i++)
             outputBuffer[i][sample] = feedbackSamples(i, 0);

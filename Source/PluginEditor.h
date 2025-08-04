@@ -12,6 +12,7 @@
 #include "PluginProcessor.h"
 #include "PointCloud.h"
 #include "LensComponent.h"
+#include "GlassLF.h"
 
 typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
 typedef juce::AudioProcessorValueTreeState::ButtonAttachment ButtonAttachment;
@@ -39,6 +40,8 @@ private:
     RotoVerbAudioProcessor& audioProcessor;
 
     AudioProcessorValueTreeState& valueTreeState;
+    
+    GlassLF glassLookAndFeel{};
 
     Label distanceLabel;
     Slider distanceSlider;
@@ -74,6 +77,7 @@ private:
     
     Image background;
     LensComponent lens{};
+    
     
     Font archivoFont;
     

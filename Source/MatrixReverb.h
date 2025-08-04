@@ -88,6 +88,7 @@ private:
     
     float maxRotation = 2 * M_PI / projectSampleRate;
     std::array<float, GivensRotation<numKernels>::numAngles> phases{};
+    std::array<float, GivensRotation<numKernels>::numAngles> rotations{};
     GivensRotation<numKernels> rotationMatrix{};
 
 };

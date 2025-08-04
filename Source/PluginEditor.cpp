@@ -39,9 +39,9 @@ RotoVerbAudioProcessorEditor::RotoVerbAudioProcessorEditor (RotoVerbAudioProcess
         attachment.reset(new SliderAttachment(this->valueTreeState, name, slider));
     };
     
-    int xCounter = 0;
-    int xIncrement = 120;
-    int xOffset = 330;
+    int xInc = 120;
+    int xO = 400;
+    int bRad = 70;
     
     int labelY1 = 15;
     int sliderY1 = 55;
@@ -49,110 +49,110 @@ RotoVerbAudioProcessorEditor::RotoVerbAudioProcessorEditor (RotoVerbAudioProcess
     int sliderY2 = 225;
     
     addLabel(distanceLabel,
-             "Distance", xOffset + xCounter * xIncrement,
+             "Distance", xO - bRad,
              labelY1,
-             180,
+             2 * bRad,
              50);
     addSlider(distanceSlider,
               distanceAttachment,
-              "distance", xOffset + xCounter * xIncrement,
+              "distance", xO - bRad,
               sliderY1,
-              180,
-              115);
+              2 * bRad,
+              2 * bRad);
     
     addLabel(dampLabel,
              "Damp",
-             xOffset + xCounter * xIncrement,
+             xO - bRad,
              labelY2,
-             180,
+             2 * bRad,
              50);
     addSlider(dampSlider,
               dampAttachment,
               "damp",
-              xOffset + xCounter * xIncrement,
+              xO - bRad,
               sliderY2,
-              180,
-              115);
+              2 * bRad,
+              2 * bRad);
     
-    xCounter++;
+    xO += xInc;
     
     addLabel(rotationLabel,
              "Rotation",
-             xOffset + xCounter * xIncrement,
+             xO - bRad,
              labelY1,
-             180,
+             2 * bRad,
              50);
     addSlider(rotationSlider,
               rotationAttachment,
               "rotation",
-              xOffset + xCounter * xIncrement,
+              xO - bRad,
               sliderY1,
-              180,
-              115);
+              2 * bRad,
+              2 * bRad);
         
     addLabel(mixLabel,
              "Mix",
-             xOffset + xCounter * xIncrement,
+             xO - bRad,
              labelY2,
-             180,
+             2 * bRad,
              50);
     addSlider(mixSlider,
               mixAttachment,
               "mix",
-              xOffset + xCounter * xIncrement,
+              xO - bRad,
               sliderY2,
-              180,
-              115);
+              2 * bRad,
+              2 * bRad);
     
-    xCounter++;
+    xO += xInc;
     
     addLabel(dispersionLabel,
              "Dispersion",
-             xOffset + xCounter * xIncrement,
+             xO - bRad,
              labelY1,
-             180,
+             2 * bRad,
              50);
     addSlider(dispersionSlider,
               dispersionAttachment,
               "dispersion",
-              xOffset + xCounter * xIncrement,
+              xO - bRad,
               55,
-              180,
-              115);
+              2 * bRad,
+              2 * bRad);
     
-    xCounter++;
+    xO += xInc;
     
     addLabel(densityLabel,
              "Density",
-             xOffset + xCounter * xIncrement,
+             xO - bRad,
              labelY1,
-             180,
+             2 * bRad,
              50);
     addSlider(densitySlider,
               densityAttachment,
               "density",
-              xOffset + xCounter * xIncrement,
+              xO - bRad,
               sliderY1,
-              180,
-              115);
+              2 * bRad,
+              2 * bRad);
     
-    xCounter++;
+    xO += xInc;
     
     addLabel(decayLabel,
              "Decay",
-             xOffset + xCounter * xIncrement,
+             xO - bRad,
              labelY1,
-             180,
+             2 * bRad,
              50);
     addSlider(decaySlider,
               decayAttachment,
               "decayS",
-              xOffset + xCounter * xIncrement,
+              xO - bRad,
               sliderY1,
-              180,
-              115);
+              2 * bRad,
+              2 * bRad);
     
-    xCounter++;
+    xO += xInc;
     
     
     setSize (1000, 380);
@@ -187,15 +187,17 @@ RotoVerbAudioProcessorEditor::RotoVerbAudioProcessorEditor (RotoVerbAudioProcess
     
     
     std::unique_ptr<PNGImageFormat> png = std::make_unique<PNGImageFormat>();
-    std::unique_ptr<MemoryInputStream> imgStream = std::make_unique<MemoryInputStream>(BinaryData::background_png,
-                                                                                       BinaryData::background_pngSize,
-                                                                                       false);
+    std::unique_ptr<MemoryInputStream> imgStream = std::make_unique<MemoryInputStream>(BinaryData::background_l_png,
+                                            BinaryData::background_l_pngSize,
+                                            false);
     
     background = png->decodeImage(*imgStream);
    
     addAndMakeVisible(lens);
     lens.setBounds(43, 43, 300, 300);
     lens.setAlwaysOnTop(true);
+    
+    setLookAndFeel(&glassLookAndFeel);
     
     getLookAndFeel().setColour(Slider::thumbColourId, Colour(0x77f6eee1));
     getLookAndFeel().setColour(Slider::rotarySliderFillColourId, Colour(0x77f6eee1));
@@ -240,7 +242,10 @@ void RotoVerbAudioProcessorEditor::paint (juce::Graphics& g)
     g.fillEllipse(0, 40, 300, 300);
     */
     g.fillAll(juce::Colours::black);
-    g.drawImageAt(background, 0, 0);
+    const auto bgTransform = std::make_unique<AffineTransform>(0.5, 0.0, 0.0,
+                                                               0.0, 0.5, 0.0);
+    //g.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
+    g.drawImageTransformed(background, *bgTransform);
     g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (15.0f));
 
