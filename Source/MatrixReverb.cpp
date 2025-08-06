@@ -153,10 +153,15 @@ void MatrixReverb::processBlock(juce::AudioBuffer<float>& buffer)
     
     for(int buffer = 0; buffer < numKernels; buffer++)
     {
+        float d0 = delays[buffer];
         for(int sample = 0; sample < numSamples; sample++)
         {
+            d0 = smoothingCoeff * d0 + (1 - smoothingCoeff) * targetDelays[buffer];
+            int delaySamples = 0.37293 * d0;
+            int dWriteIndex = (delayBufferSize + delayBufferIndex + sample - delaySamples) % delayBufferSize;
             int writeIndex = (delayBufferIndex + sample) % delayBufferSize;
-            delayBuffer[buffer][writeIndex] += inputBuffer[sample] / (2 * numKernels);
+            delayBuffer[buffer][dWriteIndex] += inputBuffer[sample] / (2 * numKernels);
+            delayBuffer[buffer][writeIndex] -= inputBuffer[sample] / (2 * numKernels);
         }
     }
     
