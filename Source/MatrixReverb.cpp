@@ -188,6 +188,7 @@ void MatrixReverb::processBlock(juce::AudioBuffer<float>& buffer)
             
             lowpassSamples[i] = (1 - lowPassCoeff) * modulatedSample + lowPassCoeff * lowpassSamples[i];
             
+            
             allpassBuffer[i][allpassBufferIndex] = modulatedSample;
             
             for(int j = 0; j < 4; j++)
@@ -267,18 +268,20 @@ void MatrixReverb::processBlock(juce::AudioBuffer<float>& buffer)
     
 }
 
-float MatrixReverb::cubicLagrangeInterpolation(std::array<float, 4> y, float x)
+float MatrixReverb::cubicLagrangeInterpolation(const std::array<float, 4>& y, float x)
 {
-    float basisPolynomial[4] = {1, 1, 1, 1};
+    static const float b[4] = {1.0 / -6, 1.0 / 2, 1.0 / -2, 1.0 / 6};
+    float basisPolynomial[4] = {b[0], b[1], b[2], b[3]};
+
     for(int i = 0; i < 4; i++)
     {
         for(int m = 0; m < i; m++)
-            basisPolynomial[i] *= (x - (m - 1)) / ((i - 1) - (m - 1));
+            basisPolynomial[i] *= (x - (m - 1));
     
         for(int m = i + 1; m < 4; m++)
-            basisPolynomial[i] *= (x - (m - 1)) / ((i - 1) - (m - 1));
+            basisPolynomial[i] *= (x - (m - 1));
     }
-    
+
     float res = 0;
     for(int i = 0; i < 4; i++)
         res += y[i] * basisPolynomial[i];

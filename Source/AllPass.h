@@ -25,7 +25,7 @@ public:
     float process(float);
 private:
     
-    float cubicLagrangeInterpolation(std::array<float, 4>& y, float x);
+    float cubicLagrangeInterpolation(const std::array<float, 4>& y, float x);
     
     std::vector<float> backBuffer;
     int backBufferIndex = 0;
@@ -34,6 +34,7 @@ private:
     const float parameterSmoothingMs = 10;
     float smoothingCoeff;
     
+    const float minDelayMs = 0.1;
     const float maxDelayMs = 50;
     float targetDelayMs;
     float currentDelayMs;

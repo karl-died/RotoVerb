@@ -21,6 +21,7 @@ Schwamm::Schwamm(std::atomic<float>* spreadParameter, std::atomic<float>* densit
             allPassArray[channel][stage] = new AllPass(*spreadParameter * delayScales[stage],
                                               *densityParameter,
                                               44100);
+    
 }
 
 void Schwamm::setSampleRate(int sampleRate)
@@ -55,6 +56,8 @@ void Schwamm::process(AudioBuffer<float>& buffer)
         {
             for(int stage = 0; stage < numStages; stage++)
                 channelData[sample] = allPassArray[channel][stage]->process(channelData[sample]);
+            
         }
+             
     }
 }

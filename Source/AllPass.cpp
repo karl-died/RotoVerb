@@ -58,7 +58,7 @@ AllPass::AllPass(float delayMs, float feedbackPercent, int sampleRate)
 
 void AllPass::setDelayMs(float delayMs)
 {
-    targetDelayMs = delayMs;
+    targetDelayMs = std::max(delayMs, minDelayMs);
 }
 
 void AllPass::setFeedbackPercent(float feedbackPercent)
@@ -78,10 +78,12 @@ void AllPass::setSampleRate(int sampleRate)
 
 float AllPass::process(float sample)
 {
-    int bufferSize = backBuffer.size();
+    const int bufferSize = backBuffer.size();
     backBufferIndex = (backBufferIndex + 1) % bufferSize;
+    
     currentDelayMs = smoothingCoeff * currentDelayMs + (1.0 - smoothingCoeff) * targetDelayMs;
     currentFeedback = smoothingCoeff * currentFeedback + (1.0 - smoothingCoeff) * targetFeedback;
+     
     
     float delaySamples = currentDelayMs * ((float) sampleRate / 1000);
     float delaySampleOffset = delaySamples - (int) delaySamples;
@@ -89,32 +91,28 @@ float AllPass::process(float sample)
     for(int i = 0; i < 4; i++)
         interpolationSamples[i] = backBuffer[(bufferSize + backBufferIndex - (int) delaySamples - 2 + i) % bufferSize];
     
-    if((int) delaySamples == 0)
-        interpolationSamples[2] = interpolationSamples[1];
-    if((int) delaySamples <= 1)
-        interpolationSamples[3] = interpolationSamples[2];
     
-    
-    
-    float delayedSample = cubicLagrangeInterpolation(interpolationSamples, 1.0 - delaySampleOffset);
-    float feedback = currentFeedback / 100.0;
+    float delayedSample = cubicLagrangeInterpolation(interpolationSamples, 1.0f - delaySampleOffset);
+    float feedback = currentFeedback / 100.0f;
     
     backBuffer[backBufferIndex] = sample + feedback * delayedSample;
-    return ((1.0 / feedback) - feedback) * backBuffer[backBufferIndex] - (1.0 / feedback) * sample;
+    return ((1.0 / feedback) - feedback) * backBuffer[backBufferIndex] - (1.0f / feedback) * sample;
 }
 
-float AllPass::cubicLagrangeInterpolation(std::array<float, 4>& y, float x)
+float AllPass::cubicLagrangeInterpolation(const std::array<float, 4>& y, float x)
 {
-    float basisPolynomial[4] = {1, 1, 1, 1};
+    static const float b[4] = {1.0 / -6, 1.0 / 2, 1.0 / -2, 1.0 / 6};
+    float basisPolynomial[4] = {b[0], b[1], b[2], b[3]};
+
     for(int i = 0; i < 4; i++)
     {
         for(int m = 0; m < i; m++)
-            basisPolynomial[i] *= (x - (m - 1)) / ((i - 1) - (m - 1));
+            basisPolynomial[i] *= (x - (m - 1));
     
         for(int m = i + 1; m < 4; m++)
-            basisPolynomial[i] *= (x - (m - 1)) / ((i - 1) - (m - 1));
+            basisPolynomial[i] *= (x - (m - 1));
     }
-    
+
     float res = 0;
     for(int i = 0; i < 4; i++)
         res += y[i] * basisPolynomial[i];

@@ -43,7 +43,7 @@ private:
 
     
     void calculateDelays();
-    float cubicLagrangeInterpolation(std::array<float, 4> y, float x);
+    float cubicLagrangeInterpolation(const std::array<float, 4>& y, float x);
     
     SmoothedParameter<float> distance;
     SmoothedParameter<float> rotation;
