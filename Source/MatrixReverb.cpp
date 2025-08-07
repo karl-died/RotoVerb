@@ -48,15 +48,15 @@ void MatrixReverb::setSamplerate(float sampleRate)
 {
     projectSampleRate = sampleRate;
     
-    delayBufferSize = std::ceil(maxDelayMs * projectSampleRate / 1000) * 2;
+    delayBufferSize   = std::ceil(maxDelayMs * projectSampleRate / 1000);
     allpassBufferSize = std::ceil(delayBufferSize * allpassDelayRatio);
     
     lowpassSamples = std::array<float, numKernels>{0};
     
     for(int i = 0; i < numKernels; i++)
     {
-        delayBuffer[i] = std::vector<float>(delayBufferSize, 0);
-        outputBuffer[i] = std::vector<float>(delayBufferSize, 0);
+        delayBuffer[i]   = std::vector<float>(delayBufferSize, 0);
+        outputBuffer[i]  = std::vector<float>(delayBufferSize, 0);
         allpassBuffer[i] = std::vector<float>(allpassBufferSize, 0);
     }
     
@@ -98,7 +98,7 @@ void MatrixReverb::calculateDelays()
     
     targetDelays[0] = d0 * projectSampleRate / 1000;
     for(int i = 1; i < numKernels; i++)
-        targetDelays[i] = targetDelays[i - 1] * delayScale;
+        targetDelays[i] = targetDelays[i - 1] * delayScale; 
     
     float decaySamples = decayS.getValue() * projectSampleRate;
     for(int i = 0; i < numKernels; i++)

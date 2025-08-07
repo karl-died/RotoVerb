@@ -57,10 +57,10 @@ private:
     
     float projectSampleRate = 44100;
     
-    const float maxDelayMs = 400;
+    const float maxDelayMs = 200;
     const float minD0 = 16;
-    const float maxD0 = 100;
-    const float maxD1 = 120;
+    const float maxD0 = 50;
+    const float maxD1 = 60;
     
     std::mutex matrixChangeMutex;
     std::atomic<bool> matrixChanged;
