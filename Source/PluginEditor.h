@@ -41,8 +41,6 @@ private:
 
     AudioProcessorValueTreeState& valueTreeState;
     
-    GlassLF glassLookAndFeel{};
-
     Label distanceLabel;
     Slider distanceSlider;
     std::unique_ptr<SliderAttachment> distanceAttachment;
@@ -80,6 +78,8 @@ private:
     
     
     Font archivoFont;
+    
+    GlassLF glassLookAndFeel{};
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RotoVerbAudioProcessorEditor)
 };

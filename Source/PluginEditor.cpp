@@ -209,6 +209,7 @@ RotoVerbAudioProcessorEditor::RotoVerbAudioProcessorEditor (RotoVerbAudioProcess
 
 RotoVerbAudioProcessorEditor::~RotoVerbAudioProcessorEditor()
 {
+    setLookAndFeel(nullptr);
 }
 
 //==============================================================================
