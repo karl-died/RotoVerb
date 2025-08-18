@@ -237,7 +237,7 @@ void MatrixReverb::processBlock(juce::AudioBuffer<float>& buffer)
         }
         
         
-        feedbackSamples = rotationMatrix.rotateSparser(rotations, feedbackSamples);
+        //feedbackSamples = rotationMatrix.rotateSparser(rotations, feedbackSamples);
         
         for(int i = 0; i < numKernels; i++)
             outputBuffer[i][sample] = feedbackSamples(i, 0);
