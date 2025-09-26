@@ -44,18 +44,20 @@ RotoVerbAudioProcessorEditor::RotoVerbAudioProcessorEditor (RotoVerbAudioProcess
     int bRad = 70;
     
     int labelY1 = 15;
-    int sliderY1 = 55;
+    int sliderY1 = 45;
     int labelY2 = 185;
-    int sliderY2 = 225;
+    int sliderY2 = 215;
     
     addLabel(distanceLabel,
-             "Distance", xO - bRad,
+             "Distance",
+             xO - bRad,
              labelY1,
              2 * bRad,
              50);
     addSlider(distanceSlider,
               distanceAttachment,
-              "distance", xO - bRad,
+              "distance",
+              xO - bRad,
               sliderY1,
               2 * bRad,
               2 * bRad);
@@ -116,7 +118,7 @@ RotoVerbAudioProcessorEditor::RotoVerbAudioProcessorEditor (RotoVerbAudioProcess
               dispersionAttachment,
               "dispersion",
               xO - bRad,
-              55,
+              sliderY1,
               2 * bRad,
               2 * bRad);
     
