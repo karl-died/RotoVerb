@@ -14,6 +14,7 @@
       <FILE id="WgjBxx" name="lens_l.png" compile="0" resource="1" file="Assets/lens_l.png"/>
     </GROUP>
     <GROUP id="{B9DB3742-3521-F94D-A145-693313313597}" name="Source">
+      <FILE id="Kc5VJ1" name="Interpolation.h" compile="0" resource="0" file="Source/Interpolation.h"/>
       <FILE id="DMFcuK" name="GlassLF.h" compile="0" resource="0" file="Source/GlassLF.h"/>
       <FILE id="dlm1Co" name="LensComponent.h" compile="0" resource="0" file="Source/LensComponent.h"/>
       <FILE id="AZ4e8O" name="PointCloud.h" compile="0" resource="0" file="Source/PointCloud.h"/>

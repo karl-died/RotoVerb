@@ -23,19 +23,19 @@ public:
     void setSampleRate(int);
     
     float process(float);
+    void processBlock(float*, int);
 private:
-    
-    float cubicLagrangeInterpolation(const std::array<float, 4>& y, float x);
     
     std::vector<float> backBuffer;
     int backBufferIndex = 0;
+    int backBufferSize = 0;
     
     int sampleRate;
     const float parameterSmoothingMs = 10;
     float smoothingCoeff;
     
     const float minDelayMs = 0.1;
-    const float maxDelayMs = 50;
+    const float maxDelayMs = 20;
     float targetDelayMs;
     float currentDelayMs;
     

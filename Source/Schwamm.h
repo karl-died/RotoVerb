@@ -36,5 +36,5 @@ private:
     
     static const int numStages = 3;
     double delayScales[numStages];
-    std::array<std::array<AllPass*, numStages>, 2> allPassArray;
+    std::array<std::array<std::unique_ptr<AllPass>, numStages>, 2> allPassArray;
 };

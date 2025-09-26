@@ -30,7 +30,7 @@ public:
             std::atomic<float>* damp,
             std::atomic<float>* density);
     
-    void setSamplerate(float);
+    void setSamplerate(float, int);
     void processBlock(juce::AudioBuffer<float>&);
     
     void setMatrix(const char* name);
@@ -41,9 +41,7 @@ public:
 private:
     static constexpr int numKernels = 12;
 
-    
     void calculateDelays();
-    float cubicLagrangeInterpolation(const std::array<float, 4>& y, float x);
     
     SmoothedParameter<float> distance;
     SmoothedParameter<float> rotation;
@@ -62,6 +60,9 @@ private:
     const float maxD0 = 50;
     const float maxD1 = 60;
     
+    const float minDampF = 1000.0f;
+    const float maxDampF = 20000.0f;
+    
     std::mutex matrixChangeMutex;
     std::atomic<bool> matrixChanged;
     std::string matrixName{"Simple"};
@@ -69,10 +70,13 @@ private:
     std::array<float, numKernels> targetDelays{};
     std::array<float, numKernels> delays{};
     std::array<float, numKernels> lowpassSamples{};
-    std::array<std::vector<float>, numKernels> delayBuffer{};
-    std::array<std::vector<float>, numKernels> outputBuffer{};
+    //std::array<std::vector<float>, numKernels> delayBuffer{};
+    //std::array<std::vector<float>, numKernels> outputBuffer{};
+    std::vector<std::array<float, numKernels>> delayBuffer{};
+    std::vector<std::array<float, numKernels>> outputBuffer{};
     int delayBufferIndex = 0;
     int delayBufferSize;
+    int outputBufferSize = 0;
     
     const float allpassDelayRatio = (0.1465 * 3.0) / 7;
     std::array<float, numKernels> targetAllpassDelays{0};
@@ -83,6 +87,7 @@ private:
     
     Eigen::Matrix<float, numKernels, 1> feedbackSamples;
     std::array<float, numKernels> targetDecays{0};
+    std::array<float, numKernels> decays{0};
     Eigen::Matrix<float, numKernels, numKernels> decayMatrix;
     Eigen::Matrix<float, numKernels, numKernels> diffuseMatrix;
     

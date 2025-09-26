@@ -18,9 +18,9 @@ Schwamm::Schwamm(std::atomic<float>* spreadParameter, std::atomic<float>* densit
 
     for(int channel = 0; channel < 2; channel++)
         for(int stage = 0; stage < numStages; stage++)
-            allPassArray[channel][stage] = new AllPass(*spreadParameter * delayScales[stage],
-                                              *densityParameter,
-                                              44100);
+            allPassArray[channel][stage] = std::make_unique<AllPass>(*spreadParameter * delayScales[stage],
+                                                                     *densityParameter,
+                                                                     4100);
     
 }
 
@@ -52,12 +52,8 @@ void Schwamm::process(AudioBuffer<float>& buffer)
     for(int channel = 0; channel < 2; channel++)
     {
         auto* channelData = buffer.getWritePointer(channel);
-        for (int sample = 0; sample < buffer.getNumSamples(); sample++)
-        {
-            for(int stage = 0; stage < numStages; stage++)
-                channelData[sample] = allPassArray[channel][stage]->process(channelData[sample]);
-            
-        }
+        for(int stage = 0; stage < numStages; stage++)
+            allPassArray[channel][stage]->processBlock(channelData, numSamples);
              
     }
 }

@@ -9,6 +9,7 @@
 */
 
 #include "AllPass.h"
+#include "Interpolation.h"
 
 AllPass::AllPass()
 {
@@ -71,15 +72,14 @@ void AllPass::setSampleRate(int sampleRate)
     this->sampleRate = sampleRate;
     smoothingCoeff = pow(0.1, 1000.0 / (parameterSmoothingMs * sampleRate));
     
-    int backBufferSize = maxDelayMs * ((float) sampleRate / 1000) + 1;
+    backBufferSize = maxDelayMs * ((float) sampleRate / 1000) + 1;
     backBuffer = std::vector<float> (backBufferSize, 0);
     backBufferIndex = 0;
 }
 
 float AllPass::process(float sample)
 {
-    const int bufferSize = backBuffer.size();
-    backBufferIndex = (backBufferIndex + 1) % bufferSize;
+    backBufferIndex = (backBufferIndex + 1) % backBufferSize;
     
     currentDelayMs = smoothingCoeff * currentDelayMs + (1.0 - smoothingCoeff) * targetDelayMs;
     currentFeedback = smoothingCoeff * currentFeedback + (1.0 - smoothingCoeff) * targetFeedback;
@@ -89,33 +89,20 @@ float AllPass::process(float sample)
     float delaySampleOffset = delaySamples - (int) delaySamples;
     
     for(int i = 0; i < 4; i++)
-        interpolationSamples[i] = backBuffer[(bufferSize + backBufferIndex - (int) delaySamples - 2 + i) % bufferSize];
+        interpolationSamples[i] = backBuffer[(backBufferSize + backBufferIndex - (int) delaySamples - 2 + i) % backBufferSize];
     
     
-    float delayedSample = cubicLagrangeInterpolation(interpolationSamples, 1.0f - delaySampleOffset);
+    float delayedSample = Interpolation::cubicLagrange(interpolationSamples, 1.0f - delaySampleOffset);
     float feedback = currentFeedback / 100.0f;
     
     backBuffer[backBufferIndex] = sample + feedback * delayedSample;
     return ((1.0 / feedback) - feedback) * backBuffer[backBufferIndex] - (1.0f / feedback) * sample;
 }
 
-float AllPass::cubicLagrangeInterpolation(const std::array<float, 4>& y, float x)
+
+void AllPass::processBlock(float* buffer, int numSamples)
 {
-    static const float b[4] = {1.0 / -6, 1.0 / 2, 1.0 / -2, 1.0 / 6};
-    float basisPolynomial[4] = {b[0], b[1], b[2], b[3]};
-
-    for(int i = 0; i < 4; i++)
-    {
-        for(int m = 0; m < i; m++)
-            basisPolynomial[i] *= (x - (m - 1));
-    
-        for(int m = i + 1; m < 4; m++)
-            basisPolynomial[i] *= (x - (m - 1));
-    }
-
-    float res = 0;
-    for(int i = 0; i < 4; i++)
-        res += y[i] * basisPolynomial[i];
-    
-    return res;
+    for(int i = 0; i < numSamples; i++)
+        buffer[i] = process(buffer[i]);
 }
+

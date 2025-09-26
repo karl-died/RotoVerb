@@ -36,7 +36,7 @@ parameters(*this, nullptr, Identifier("RotoVerb"),
                                            0.0f),
     std::make_unique<AudioParameterFloat> (ParameterID {"decayS", 1},
                                            "Decay",
-                                           NormalisableRange<float>(0.0f, 10.0f, 0.001f, 0.3333333f),
+                                           NormalisableRange<float>(0.2f, 10.0f, 0.001f, 0.6f),
                                            1.0f),
     std::make_unique<AudioParameterFloat> (ParameterID {"density", 1},
                                            "Density",
@@ -149,7 +149,7 @@ void RotoVerbAudioProcessor::changeProgramName (int index, const juce::String& n
 //==============================================================================
 void RotoVerbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    reverb->setSamplerate(sampleRate);
+    reverb->setSamplerate(sampleRate, samplesPerBlock);
     schwamm->setSampleRate(sampleRate);
 }
 
@@ -199,6 +199,8 @@ void RotoVerbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     
     reverb->processBlock(reverbBuffer);
     schwamm->process(reverbBuffer);
+    
+    reverbBuffer.applyGain(2.0);
     
     float m0 = mix->getValue();
     float m1 = mix->getTargetValue();
